@@ -1,28 +1,60 @@
 #include <Arduino.h>
 
 const int LED_PIN = 2;
+const int TRIG_PIN = 5;
+const int ECHO_PIN = 18;
 
-// put function declarations here:
 void blinkLED();
+float getDistance();
 
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(9600);
+
   pinMode(LED_PIN, OUTPUT);
-  Serial.println("LED blink test starting...");
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+
   blinkLED();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  float distance = getDistance();
+
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+  delay(1000);
 }
 
-// put function definitions here:
 void blinkLED() {
-  for (int i = 0; i < 10; i++) {
-    digitalWrite(2, HIGH);
+  Serial.println("LED blink test starting...");
+  for (int i = 0; i < 5; i++) {
+    digitalWrite(LED_PIN, HIGH);
     delay(250);
-    digitalWrite(2, LOW);
+    digitalWrite(LED_PIN, LOW);
     delay(250);
   }
+}
+
+float getDistance() {
+  // Send a 10 microsecond pulse on TRIG to trigger the sensor
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+
+  // Set TRIG pin to high for 10 microseconds
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  // Measure how long the ECHO pin stays HIGH (in microseconds)
+  long duration = pulseIn(ECHO_PIN, HIGH);
+
+  // Convert m/s to cm/microsecond
+  float distance = (duration * 0.0343) / 2;
+
+  // Filter out readings outside the sensor's valid range
+  if (distance < 1 || distance > 400) {
+    return -1; // invalid reading
+  }
+  return distance;
 }
