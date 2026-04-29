@@ -15,6 +15,17 @@
 4. Click **Open Project** and select the cloned folder
 5. PlatformIO will automatically download the required framework and dependencies
 
+## Wiring
+
+### HC-SR04 Ultrasonic Sensor
+
+| HC-SR04 Pin | ESP32 Pin |
+| ----------- | --------- |
+| VCC         | VIN       |
+| GND         | GND       |
+| TRIG        | D5        |
+| ECHO        | D18       |
+
 ## Setup
 
 ### Add PlatformIO to PATH
