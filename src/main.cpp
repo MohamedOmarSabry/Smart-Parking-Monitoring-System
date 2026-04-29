@@ -1,11 +1,16 @@
 #include <Arduino.h>
 
+const int LED_PIN = 2;
+
 // put function declarations here:
-int myFunction(int, int);
+void blinkLED();
 
 void setup() {
   // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  Serial.begin(9600);
+  pinMode(LED_PIN, OUTPUT);
+  Serial.println("LED blink test starting...");
+  blinkLED();
 }
 
 void loop() {
@@ -13,6 +18,11 @@ void loop() {
 }
 
 // put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+void blinkLED() {
+  for (int i = 0; i < 10; i++) {
+    digitalWrite(2, HIGH);
+    delay(250);
+    digitalWrite(2, LOW);
+    delay(250);
+  }
 }
