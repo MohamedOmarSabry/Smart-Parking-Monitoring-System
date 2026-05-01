@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Smart Parking</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <div class="container">
+            <h1 class="title">Smart Parking Dashboard</h1>
+
+            <div class="card main">
+                <h2>Total Slots</h2>
+                <div class="big-number">1</div>
+            </div>
+
+            <div class="grid">
+                <div class="card occupied">
+                    <h3>Occupied</h3>
+                    <div class="number" id="occupied">0</div>
+                </div>
+
+                <div class="card free">
+                    <h3>Free</h3>
+                    <div class="number" id="free">1</div>
+                </div>
+            </div>
+
+            <p class="status" id="status">Connecting...</p>
+        </div>
+
+        <script src="app.js"></script>
+    </body>
+</html>
