@@ -1,0 +1,61 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f7fb;
+    color: #1f2937;
+}
+
+.container {
+    max-width: 500px;
+    margin: 80px auto;
+    text-align: center;
+}
+
+.title {
+    font-size: 24px;
+    margin-bottom: 30px;
+    font-weight: 600;
+}
+
+.card {
+    background: white;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 20px;
+}
+
+.main .big-number {
+    font-size: 48px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.grid {
+    display: flex;
+    gap: 15px;
+}
+
+.grid .card {
+    flex: 1;
+}
+
+.number {
+    font-size: 32px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.occupied .number {
+    color: #ef4444;
+}
+
+.free .number {
+    color: #22c55e;
+}
+
+.status {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #6b7280;
+}
