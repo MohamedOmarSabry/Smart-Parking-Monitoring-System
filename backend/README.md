@@ -1,4 +1,4 @@
-# ESP32 Backend Server
+# Backend Server
 
 This is a simple Node.js backend that receives sensor data from an ESP32 device and logs it for debugging.
 
