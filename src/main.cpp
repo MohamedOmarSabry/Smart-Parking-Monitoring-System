@@ -32,7 +32,7 @@ void setup() {
 
 void loop() {
   float distance = getDistance();
-  bool occupied = (distance != -1 && distance < 10);
+  bool occupied = (distance != -1 && distance < 20);
 
   Serial.print("Distance: ");
   Serial.print(distance);
