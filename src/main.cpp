@@ -27,33 +27,155 @@
 #define RED_LED_PIN GPIO_NUM_23
 #define TRIG_PIN GPIO_NUM_5
 #define ECHO_PIN GPIO_NUM_18
+#define DATA_PIN GPIO_NUM_17 // DIN
+#define CLK_PIN GPIO_NUM_19  // CLK
+#define CS_PIN GPIO_NUM_21   // LD
+
+static const uint8_t digit_0[8] = {
+    0b00111100,
+    0b01100110,
+    0b01101110,
+    0b01110110,
+    0b01100110,
+    0b01100110,
+    0b00111100,
+    0b00000000};
+
+static const uint8_t digit_1[8] = {
+    0b00011000,
+    0b00111000,
+    0b00011000,
+    0b00011000,
+    0b00011000,
+    0b00011000,
+    0b00111100,
+    0b00000000};
 
 static void gpio_init(void);
 static void wifi_init(void);
 static void blink_led(void);
 static float get_distance(void);
 static void send_http_request(bool occupied);
-
+static void max7219_send(uint8_t reg, uint8_t data);
+static void max7219_init(void);
+static void max7219_clear(void);
+static void max7219_test_pattern(void);
+static void max7219_display_digit(const uint8_t *digit);
 // Entry point
 extern "C" void app_main(void)
 {
   wifi_init();
   gpio_init();
   blink_led();
-  while (1) {
+  max7219_init();  // ✅ ADD THIS
+  max7219_clear(); // ✅ ADD THIS
+  while (1)
+  {
     float distance = get_distance();
     bool occupied = (distance != -1 && distance < 20);
 
     printf("Distance: %.2f cm | Occupied: %s\n",
-      distance,
-      occupied ? "YES" : "NO");
+           distance,
+           occupied ? "YES" : "NO");
 
     gpio_set_level(RED_LED_PIN, occupied);
 
     send_http_request(occupied);
 
+    if (occupied)
+    {
+      max7219_display_digit(digit_0); // show 0
+    }
+    else
+    {
+      max7219_display_digit(digit_1); // show 1
+    }
+
     // Take a new reading every second
     vTaskDelay(pdMS_TO_TICKS(1000));
+  }
+}
+
+static void max7219_send(uint8_t reg, uint8_t data)
+{
+  gpio_set_level(CS_PIN, 0);
+
+  for (int i = 0; i < 3; i++) // 3 modules
+  {
+    for (int bit = 7; bit >= 0; bit--)
+    {
+      gpio_set_level(CLK_PIN, 0);
+      gpio_set_level(DATA_PIN, (reg >> bit) & 1);
+      gpio_set_level(CLK_PIN, 1);
+    }
+
+    for (int bit = 7; bit >= 0; bit--)
+    {
+      gpio_set_level(CLK_PIN, 0);
+      gpio_set_level(DATA_PIN, (data >> bit) & 1);
+      gpio_set_level(CLK_PIN, 1);
+    }
+  }
+
+  gpio_set_level(CS_PIN, 1);
+}
+
+static void max7219_init(void)
+{
+  gpio_set_direction(DATA_PIN, GPIO_MODE_OUTPUT);
+  gpio_set_direction(CLK_PIN, GPIO_MODE_OUTPUT);
+  gpio_set_direction(CS_PIN, GPIO_MODE_OUTPUT);
+
+  max7219_send(0x0F, 0x00); // display test off
+  max7219_send(0x0C, 0x01); // shutdown = normal operation
+  max7219_send(0x0B, 0x07); // scan limit = 8 digits
+  max7219_send(0x09, 0x00); // no decode
+  max7219_send(0x0A, 0x05); // brightness (0-15)
+}
+
+static void max7219_clear(void)
+{
+  for (int row = 1; row <= 8; row++)
+  {
+    max7219_send(row, 0x00);
+  }
+}
+
+static void max7219_test_pattern(void)
+{
+  for (int row = 1; row <= 8; row++)
+  {
+    max7219_send(row, 0xFF); // all LEDs ON
+  }
+}
+
+static void max7219_display_digit(const uint8_t *digit)
+{
+  for (int row = 0; row < 8; row++)
+  {
+    gpio_set_level(CS_PIN, 0);
+
+    // Send same digit to all 3 modules
+    for (int dev = 0; dev < 3; dev++)
+    {
+      // send row address
+      for (int bit = 7; bit >= 0; bit--)
+      {
+        gpio_set_level(CLK_PIN, 0);
+        gpio_set_level(DATA_PIN, ((row + 1) >> bit) & 1);
+        gpio_set_level(CLK_PIN, 1);
+      }
+
+      // send row data
+      for (int bit = 7; bit >= 0; bit--)
+      {
+        gpio_set_level(CLK_PIN, 0);
+        gpio_set_level(DATA_PIN, (digit[row] >> bit) & 1);
+        gpio_set_level(CLK_PIN, 1);
+      }
+    }
+
+    gpio_set_level(CS_PIN, 1);
   }
 }
 
@@ -75,12 +197,10 @@ static void wifi_init(void)
   wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
   esp_wifi_init(&cfg);
 
-  wifi_config_t wifi_config = {
-      .sta = {
-          .ssid = WIFI_SSID,
-          .password = WIFI_PASS,
-      },
-  };
+  wifi_config_t wifi_config = {};
+
+  strcpy((char *)wifi_config.sta.ssid, WIFI_SSID);
+  strcpy((char *)wifi_config.sta.password, WIFI_PASS);
 
   esp_wifi_set_mode(WIFI_MODE_STA);
   esp_wifi_set_config(WIFI_IF_STA, &wifi_config);
@@ -92,7 +212,8 @@ static void wifi_init(void)
 
 static void blink_led(void)
 {
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 5; i++)
+  {
     gpio_set_level(INTERNAL_LED_PIN, 1);
     vTaskDelay(pdMS_TO_TICKS(250));
     gpio_set_level(INTERNAL_LED_PIN, 0);
@@ -112,15 +233,19 @@ static float get_distance(void)
   int64_t start = esp_timer_get_time();
 
   // Wait for ECHO to changes from 0 to 1.
-  while (gpio_get_level(ECHO_PIN) == 0) {
-    if (esp_timer_get_time() - start > 50000) return -1;
+  while (gpio_get_level(ECHO_PIN) == 0)
+  {
+    if (esp_timer_get_time() - start > 50000)
+      return -1;
   }
 
   int64_t echo_start = esp_timer_get_time();
 
   // When ECHO changes to 1, start measuring the time.
-  while (gpio_get_level(ECHO_PIN) == 1) {
-    if (esp_timer_get_time() - echo_start > 50000) return -1;
+  while (gpio_get_level(ECHO_PIN) == 1)
+  {
+    if (esp_timer_get_time() - echo_start > 50000)
+      return -1;
   }
 
   int64_t echo_end = esp_timer_get_time();
@@ -139,9 +264,8 @@ static void send_http_request(bool occupied)
   char json[64];
   sprintf(json, "{\"occupied\":%s}", occupied ? "true" : "false");
 
-  esp_http_client_config_t config = {
-      .url = SERVER_URL,
-  };
+  esp_http_client_config_t config = {}; // ✅ FIX
+  config.url = SERVER_URL;
 
   esp_http_client_handle_t client = esp_http_client_init(&config);
 
