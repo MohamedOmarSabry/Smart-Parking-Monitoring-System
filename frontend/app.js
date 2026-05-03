@@ -25,4 +25,4 @@ async function fetchData() {
 fetchData();
 
 // Poll every second
-setInterval(fetchData, 1000);
+setInterval(fetchData, 500);
