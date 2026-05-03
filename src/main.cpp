@@ -15,19 +15,15 @@
 #include "driver/gpio.h"
 #include "esp_timer.h"
 
-// Wifi credentials
-#define WIFI_SSID "WE_C14A58_EXT"
-#define WIFI_PASS "Shezer@11"
-
 // Server
-#define SERVER_URL "http://192.168.1.67:3000/sensor"
+#define SERVER_URL "http://192.168.4.2:3000/sensor"
 
 // Pins
 #define INTERNAL_LED_PIN GPIO_NUM_2
 #define RED_LED_PIN GPIO_NUM_23
 #define TRIG_PIN GPIO_NUM_5
 #define ECHO_PIN GPIO_NUM_18
-#define DATA_PIN GPIO_NUM_17 
+#define DATA_PIN GPIO_NUM_22
 #define CLK_PIN GPIO_NUM_19  
 #define CS_PIN GPIO_NUM_21   
 
@@ -67,8 +63,8 @@ extern "C" void app_main(void)
   wifi_init();
   gpio_init();
   blink_led();
-  max7219_init();
-  max7219_clear();
+  //max7219_init();
+  //max7219_clear();
 
   while (1)
   {
@@ -83,14 +79,14 @@ extern "C" void app_main(void)
 
     send_http_request(occupied);
 
-    if (occupied)
-    {
-      max7219_display_digit(digit_0); // show 0
-    }
-    else
-    {
-      max7219_display_digit(digit_1); // show 1
-    }
+    // if (occupied)
+    // {
+    //   max7219_display_digit(digit_0); // show 0
+    // }
+    // else
+    // {
+    //   max7219_display_digit(digit_1); // show 1
+    // }
 
     // Take a new reading every second.
     vTaskDelay(pdMS_TO_TICKS(1000));
@@ -110,22 +106,22 @@ static void wifi_init(void)
   nvs_flash_init();
   esp_netif_init();
   esp_event_loop_create_default();
-  esp_netif_create_default_wifi_sta();
+  esp_netif_create_default_wifi_ap();
 
   wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
   esp_wifi_init(&cfg);
 
   wifi_config_t wifi_config = {};
+  strcpy((char*)wifi_config.ap.ssid, "ESP32-AP");
+  strcpy((char*)wifi_config.ap.password, "12345678");
+  wifi_config.ap.max_connection = 4;
+  wifi_config.ap.authmode = WIFI_AUTH_WPA2_PSK;
 
-  strcpy((char*)wifi_config.sta.ssid, WIFI_SSID);
-  strcpy((char*)wifi_config.sta.password, WIFI_PASS);
-
-  esp_wifi_set_mode(WIFI_MODE_STA);
-  esp_wifi_set_config(WIFI_IF_STA, &wifi_config);
+  esp_wifi_set_mode(WIFI_MODE_AP);
+  esp_wifi_set_config(WIFI_IF_AP, &wifi_config);
   esp_wifi_start();
-  esp_wifi_connect();
 
-  ESP_LOGI("WIFI", "Connecting to WiFi...");
+  ESP_LOGI("WIFI", "AP started. SSID: ESP32-AP");
 }
 
 static void max7219_init(void)
