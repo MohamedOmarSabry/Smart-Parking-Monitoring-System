@@ -27,6 +27,8 @@
 #define CLK_PIN GPIO_NUM_19  
 #define CS_PIN GPIO_NUM_21   
 
+static volatile bool occupied_flag = false;
+
 static const uint8_t digit_0[8] = {
     0b00111100,
     0b01100110,
@@ -57,6 +59,15 @@ static void max7219_init(void);
 static void max7219_clear(void);
 static void max7219_display_digit(const uint8_t* digit);
 
+void http_task(void* arg)
+{
+  while (1)
+  {
+    send_http_request(occupied_flag);
+    vTaskDelay(pdMS_TO_TICKS(500));
+  }
+}
+
 // Entry point
 extern "C" void app_main(void)
 {
@@ -65,6 +76,8 @@ extern "C" void app_main(void)
   blink_led();
   //max7219_init();
   //max7219_clear();
+
+  xTaskCreate(http_task, "http_task", 4096, NULL, 1, NULL);
 
   while (1)
   {
@@ -76,8 +89,7 @@ extern "C" void app_main(void)
       occupied ? "YES" : "NO");
 
     gpio_set_level(RED_LED_PIN, occupied);
-
-    send_http_request(occupied);
+    occupied_flag = occupied;
 
     // if (occupied)
     // {
@@ -89,7 +101,7 @@ extern "C" void app_main(void)
     // }
 
     // Take a new reading every second.
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    vTaskDelay(pdMS_TO_TICKS(500));
   }
 }
 
@@ -201,6 +213,7 @@ static void send_http_request(bool occupied)
 
   esp_http_client_config_t config = {};
   config.url = SERVER_URL;
+  config.timeout_ms = 1000;
 
   esp_http_client_handle_t client = esp_http_client_init(&config);
 
@@ -209,7 +222,6 @@ static void send_http_request(bool occupied)
   esp_http_client_set_post_field(client, json, strlen(json));
 
   esp_http_client_perform(client);
-
   esp_http_client_cleanup(client);
 }
 
