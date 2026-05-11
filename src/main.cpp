@@ -441,20 +441,45 @@ void parse_slots_array(int li, const char* json)
   }
 }
 
-esp_err_t lane_post_handler(httpd_req_t* req)
+static esp_err_t lane_post_handler(httpd_req_t* req)
 {
   char body[512] = {};
-  httpd_req_recv(req, body, sizeof(body) - 1);
+  int received = httpd_req_recv(req, body, sizeof(body) - 1);
+  printf("DEBUG handler hit, received %d bytes\n", received);
+  printf("DEBUG body: %s\n", body);
 
   char lane_id[32] = {};
   if (!json_get_string(body, "lane_id", lane_id, sizeof(lane_id))) {
-    httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Bad JSON");
-    return ESP_FAIL;
+    printf("DEBUG failed to parse lane_id\n");
+    return httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Bad JSON"), ESP_FAIL;
   }
+  printf("DEBUG lane_id: %s\n", lane_id);
 
-  printf("Lane update from: %s\n", lane_id);
   int li = find_or_add_lane(lane_id);
-  if (li >= 0) parse_slots_array(li, body);
+  if (li < 0) { httpd_resp_sendstr(req, "OK"); return ESP_OK; }
+
+  // Parse slots array
+  const char* slots_start = strstr(body, "\"slots\":");
+  const char* p = slots_start ? strchr(slots_start, '[') : NULL;
+  printf("DEBUG slots array found: %s\n", p ? "yes" : "no");
+  if (p) for (p++; *p && *p != ']';) {
+    p = strchr(p, '{'); if (!p) break;
+    const char* end = strchr(p, '}'); if (!end) break;
+    char s[128] = {};
+    strncpy(s, p, end - p + 1);
+    printf("DEBUG slot json: %s\n", s);
+    char slot_id[32] = {}; bool occupied = false;
+    if (json_get_string(s, "slot_id", slot_id, sizeof(slot_id)) &&
+      json_get_bool(s, "occupied", &occupied)) {
+      printf("DEBUG slot_id=%s occupied=%d\n", slot_id, occupied);
+      int si = find_or_add_slot(li, slot_id);
+      if (si >= 0) slots[li][si].occupied = occupied;
+    }
+    else {
+      printf("DEBUG failed to parse slot fields\n");
+    }
+    p = end + 1;
+  }
 
   httpd_resp_sendstr(req, "OK");
   return ESP_OK;
@@ -528,7 +553,7 @@ void backend_task(void* arg)
 
 void wifi_init(void)
 {
-  esp_netif_create_default_wifi_ap();
+  esp_netif_t* netif = esp_netif_create_default_wifi_ap();
 
   wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
   esp_wifi_init(&cfg);
@@ -543,7 +568,16 @@ void wifi_init(void)
   esp_wifi_set_config(WIFI_IF_AP, &ap_config);
   esp_wifi_start();
 
-  printf("Main AP started: %s\n", MAIN_AP_SSID);
+  // Move to 192.168.5.x to avoid subnet collision with lane APs (192.168.4.x)
+  esp_netif_ip_info_t ip_info;
+  IP4_ADDR(&ip_info.ip, 192, 168, 5, 1);
+  IP4_ADDR(&ip_info.gw, 192, 168, 5, 1);
+  IP4_ADDR(&ip_info.netmask, 255, 255, 255, 0);
+  esp_netif_dhcps_stop(netif);
+  esp_netif_set_ip_info(netif, &ip_info);
+  esp_netif_dhcps_start(netif);
+
+  printf("Main AP started: %s | IP: 192.168.5.1\n", MAIN_AP_SSID);
 }
 
 extern "C" void app_main(void)

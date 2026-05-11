@@ -6,15 +6,26 @@ body {
 }
 
 .container {
-    max-width: 500px;
-    margin: 80px auto;
+    max-width: 700px;
+    margin: 60px auto;
+    padding: 0 16px;
     text-align: center;
 }
 
 .title {
     font-size: 24px;
-    margin-bottom: 30px;
+    margin-bottom: 24px;
     font-weight: 600;
+}
+
+.summary-grid {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 24px;
+}
+
+.summary-grid .card {
+    flex: 1;
 }
 
 .card {
@@ -22,40 +33,70 @@ body {
     border-radius: 14px;
     padding: 20px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
-.main .big-number {
-    font-size: 48px;
+.big-number {
+    font-size: 40px;
     font-weight: bold;
-    margin-top: 10px;
+    margin-top: 8px;
 }
 
-.grid {
-    display: flex;
-    gap: 15px;
-}
-
-.grid .card {
-    flex: 1;
-}
-
-.number {
-    font-size: 32px;
-    font-weight: bold;
-    margin-top: 10px;
-}
-
-.occupied .number {
+.card.occupied .big-number {
     color: #ef4444;
 }
-
-.free .number {
+.card.free .big-number {
     color: #22c55e;
+}
+
+.lane-card {
+    text-align: left;
+}
+
+.lane-card h3 {
+    margin: 0 0 14px;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+}
+
+.slots-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 110px;
+    padding: 14px 10px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    gap: 6px;
+}
+
+.slot-occupied {
+    background: #fee2e2;
+    color: #991b1b;
+}
+.slot-free {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.slot-status {
+    font-size: 11px;
+    font-weight: 400;
+    opacity: 0.8;
 }
 
 .status {
     margin-top: 20px;
-    font-size: 14px;
-    color: #6b7280;
+    font-size: 13px;
+    color: #9ca3af;
 }

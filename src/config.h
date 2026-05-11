@@ -1,12 +1,14 @@
 #pragma once
 
 //#define ROLE_SLOT
-#define ROLE_LANE
-// #define ROLE_MAIN
+//#define ROLE_LANE
+#define ROLE_MAIN
 
 #if defined(ROLE_SLOT)
 
 #define SLOT_ID         "SLOT_1"       // unique per slot
+
+#define LANE_AP_SSID    "LANE1-AP"      
 #define LANE_AP_PASS    "lane1pass"
 #define LANE_SERVER_URL "http://192.168.4.1:3000/slot"
 
@@ -22,12 +24,12 @@
 #define LANE_AP_PASS    "lane1pass"
 #define MAIN_AP_SSID    "MAIN-AP"      // main controller's AP (this lane connects to it)
 #define MAIN_AP_PASS    "mainpass"
-#define MAIN_SERVER_URL "http://192.168.4.1:3000/lane"
+#define MAIN_SERVER_URL "http://192.168.5.1:3000/lane"
 
 #elif defined(ROLE_MAIN)
 
 #define MAIN_AP_SSID  "MAIN-AP"        // this controller's AP (lanes connect here)
 #define MAIN_AP_PASS  "mainpass"
-#define BACKEND_URL   "http://192.168.4.2:3000/sensor"  // IP of the PC on MAIN-AP
+#define BACKEND_URL   "http://192.168.5.2:3000/sensor" // IP of the PC on MAIN-AP
 
 #endif
