@@ -8,26 +8,26 @@
         <div class="container">
             <h1 class="title">Smart Parking Dashboard</h1>
 
-            <div class="card main">
-                <h2>Total Slots</h2>
-                <div class="big-number">1</div>
-            </div>
-
-            <div class="grid">
+            <div class="summary-grid">
+                <div class="card">
+                    <h2>Total</h2>
+                    <div class="big-number" id="total">0</div>
+                </div>
                 <div class="card occupied">
-                    <h3>Occupied</h3>
-                    <div class="number" id="occupied">0</div>
+                    <h2>Occupied</h2>
+                    <div class="big-number" id="occupied">0</div>
                 </div>
-
                 <div class="card free">
-                    <h3>Free</h3>
-                    <div class="number" id="free">1</div>
+                    <h2>Free</h2>
+                    <div class="big-number" id="free">0</div>
                 </div>
             </div>
+
+            <!-- Per-lane breakdown (populated by app.js) -->
+            <div id="lanes"></div>
 
             <p class="status" id="status">Connecting...</p>
         </div>
-
         <script src="app.js"></script>
     </body>
 </html>
