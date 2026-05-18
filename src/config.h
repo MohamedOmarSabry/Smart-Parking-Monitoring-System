@@ -15,7 +15,10 @@
 // GPIO pins
 #define TRIG_PIN      GPIO_NUM_12
 #define ECHO_PIN      GPIO_NUM_13
-#define RGB_LED_PIN   GPIO_NUM_14
+#define GREEN_PIN     GPIO_NUM_14
+#define RED_PIN       GPIO_NUM_27
+#define RGB_VCC_PIN   GPIO_NUM_26
+
 
 #elif defined(ROLE_LANE)
 
