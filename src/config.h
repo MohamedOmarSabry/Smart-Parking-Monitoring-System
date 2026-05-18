@@ -33,6 +33,6 @@
 
 #define MAIN_AP_SSID  "MAIN-AP"        // this controller's AP (lanes connect here)
 #define MAIN_AP_PASS  "mainpass"
-#define BACKEND_URL   "http://192.168.5.2:3000/sensor" // IP of the PC on MAIN-AP
+#define BACKEND_URL   "http://192.168.5.5:3000/sensor" // IP of the PC on MAIN-AP
 
 #endif

@@ -24,7 +24,6 @@
 
 static volatile bool occupied_flag = false;
 
-/* Function Prototypes */
 float get_distance(void);
 void send_to_lane_controller(bool occupied);
 void sensor_task(void* arg);
