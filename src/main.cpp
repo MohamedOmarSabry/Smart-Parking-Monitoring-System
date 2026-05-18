@@ -99,7 +99,10 @@ void sensor_task(void* arg)
 
     printf("Distance: %.2f cm | Occupied: %s\n", distance, occupied ? "YES" : "NO");
 
-    gpio_set_level(RGB_LED_PIN, occupied);
+    // Active low: 0 = LED on, 1 = LED off
+    gpio_set_level(RED_PIN, occupied ? 0 : 1);
+    gpio_set_level(GREEN_PIN, occupied ? 1 : 0);
+
     occupied_flag = occupied;
 
     vTaskDelay(pdMS_TO_TICKS(500));
@@ -138,7 +141,10 @@ void gpio_init(void)
 {
   gpio_set_direction(TRIG_PIN, GPIO_MODE_OUTPUT);
   gpio_set_direction(ECHO_PIN, GPIO_MODE_INPUT);
-  gpio_set_direction(RGB_LED_PIN, GPIO_MODE_OUTPUT);
+  gpio_set_direction(GREEN_PIN, GPIO_MODE_OUTPUT);
+  gpio_set_direction(RED_PIN, GPIO_MODE_OUTPUT);
+  gpio_set_direction(RGB_VCC_PIN, GPIO_MODE_OUTPUT);
+  gpio_set_level(RGB_VCC_PIN, 1);
 }
 
 // =============================================================================
@@ -540,6 +546,7 @@ void send_to_backend(void)
   esp_http_client_set_header(client, "Content-Type", "application/json");
   esp_http_client_set_post_field(client, json, strlen(json));
   esp_http_client_perform(client);
+  printf("DEBUG: Backend status: %d\n", esp_http_client_get_status_code(client));
   esp_http_client_cleanup(client);
 }
 
@@ -564,17 +571,18 @@ void wifi_init(void)
   ap_config.ap.max_connection = 4;
   ap_config.ap.authmode = WIFI_AUTH_WPA2_PSK;
 
-  esp_wifi_set_mode(WIFI_MODE_AP);
-  esp_wifi_set_config(WIFI_IF_AP, &ap_config);
-  esp_wifi_start();
-
-  // Move to 192.168.5.x to avoid subnet collision with lane APs (192.168.4.x)
+  // Set IP before starting wifi so DHCP starts on the right subnet
+  esp_netif_dhcps_stop(netif);
   esp_netif_ip_info_t ip_info;
   IP4_ADDR(&ip_info.ip, 192, 168, 5, 1);
   IP4_ADDR(&ip_info.gw, 192, 168, 5, 1);
   IP4_ADDR(&ip_info.netmask, 255, 255, 255, 0);
-  esp_netif_dhcps_stop(netif);
   esp_netif_set_ip_info(netif, &ip_info);
+
+  esp_wifi_set_mode(WIFI_MODE_AP);
+  esp_wifi_set_config(WIFI_IF_AP, &ap_config);
+  esp_wifi_start();
+
   esp_netif_dhcps_start(netif);
 
   printf("Main AP started: %s | IP: 192.168.5.1\n", MAIN_AP_SSID);
